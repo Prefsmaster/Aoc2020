@@ -23,19 +23,9 @@ namespace Day8
             // Part 2, brute forced
             foreach (var i in instructions.Where(o => o.OpCode!="acc"))
             {
-                var oldOpCode = i.OpCode;
-
-                i.OpCode = i.OpCode switch
-                {
-                    "jmp" => "nop",
-                    "nop" => "jmp",
-                    _ => i.OpCode
-                };
-
+                i.SwitchJmpNop();
                 (loops, pc, acc) = TestProgram(instructions);
-
-                i.OpCode = oldOpCode;
-
+                i.SwitchJmpNop();
                 if (!loops && pc == instructions.Length)
                     break;
             }
@@ -52,23 +42,18 @@ namespace Day8
 
             while (!instructions[pc].Visited)
             {
-                var i = instructions[pc];
+                var i = instructions[pc++];
                 i.Visited = true;
                 switch (i.OpCode)
                 {
-                    case "nop":
-                        pc++;
-                        break;
                     case "acc":
                         acc += i.Operand;
-                        pc++;
                         break;
                     case "jmp":
-                        pc += i.Operand;
+                        pc += i.Operand-1;
                         break;
-                    default:
-                        throw new Exception("WUT?!!");
                 }
+                
                 if (pc < 0 || pc >= instructions.Length)
                 {
                     return (false, pc, acc);
@@ -89,6 +74,14 @@ namespace Day8
             public string OpCode;
             public int Operand { get; }
             public bool Visited;
+
+            public void SwitchJmpNop() =>
+                OpCode = OpCode switch
+                {
+                    "jmp" => "nop",
+                    "nop" => "jmp",
+                    _ => OpCode
+                };
         }
     }
 }
