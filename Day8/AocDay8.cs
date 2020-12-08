@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
@@ -9,11 +8,11 @@ namespace Day8
     {
         private static void Main()
         {
+            var instructions = File.ReadAllLines("input.txt").Select(l => new Instruction(l)).ToArray();
+
             bool loops;
             int pc;
             int acc;
-
-            var instructions = ReadData("input.txt");
 
             // Part 1
             (loops, pc, acc) = TestProgram(instructions);
@@ -77,23 +76,6 @@ namespace Day8
             }
             return (true, pc, acc);
         }
-        private static Instruction[] ReadData(string filename)
-        {
-            var instructions = new List<Instruction>();
-
-            var file = new StreamReader(filename);
-            string line;
-            do
-            {
-                line = file.ReadLine();
-                
-                if (!string.IsNullOrEmpty(line))
-                    instructions.Add(new Instruction(line));
-            } while (line != null);
-
-            return instructions.ToArray();
-        }
-
 
         internal class Instruction
         {
