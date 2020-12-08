@@ -8,39 +8,44 @@ namespace Day8
     {
         private static void Main()
         {
+            bool loops;
+            int pc;
+            int acc;
+
             var instructions = ReadData("input.txt");
 
             // Part 1
-            TestProgram(instructions);
+            (loops, pc, acc) = TestProgram(instructions);
+            Console.WriteLine(loops
+                ? $"Program loops from PC {pc} when ACC is {acc}"
+                : $"Program out of bounds with PC at {pc} and ACC is {acc}");
 
             // Part 2, brute forced
             foreach (var i in instructions)
             {
-                if (i.OpCode == "jmp")
+                switch (i.OpCode)
                 {
-                    i.OpCode = "nop";
-                    if (TestProgram(instructions) == instructions.Length)
-                    {
+                    case "acc":
+                        continue;
+                    case "jmp":
+                        i.OpCode = "nop";
+                        (loops, pc, acc) = TestProgram(instructions);
+                        i.OpCode = "jmp";
                         break;
-                    }
-                    i.OpCode = "jmp";
-                }
-
-                if (i.OpCode == "nop")
-                {
-
-                    i.OpCode = "jmp";
-                    if (TestProgram(instructions) == instructions.Length)
-                    {
+                    case "nop":
+                        i.OpCode = "jmp";
+                        (loops, pc, acc) = TestProgram(instructions);
+                        i.OpCode = "nop";
                         break;
-                    }
-
-                    i.OpCode = "nop";
                 }
+                if (!loops && pc == instructions.Length)
+                    break;
             }
+
+            Console.WriteLine($"Program counter at {pc} is out of bounds, with ACC at {acc}.");
         }
 
-        private static int TestProgram(Instruction[] instructions)
+        private static (bool loops, int pc, int acc) TestProgram(Instruction[] instructions)
         {
             // returns -1 when it loops, otherwise the PC value that is out of bounds.
             foreach (var i in instructions)
@@ -67,15 +72,12 @@ namespace Day8
                     default:
                         throw new Exception("WUT?!!");
                 }
-
                 if (pc < 0 || pc >= instructions.Length)
                 {
-                    Console.WriteLine($"Program counter {pc} is out of bounds with ACC at {acc}.");
-                    return pc;
+                    return (false, pc, acc);
                 }
             }
-            Console.WriteLine($"Program loops from PC {pc} when ACC is {acc}");
-            return 0;
+            return (true, pc, acc);
         }
         private static Instruction[] ReadData(string filename)
         {
