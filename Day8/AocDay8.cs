@@ -26,14 +26,14 @@ namespace Day8
                 switch (i.OpCode)
                 {
                     case "jmp":
-                        i.OpCode = "nop";
+                        i.SetOpCode("nop");
                         (loops, pc, acc) = TestProgram(instructions);
-                        i.OpCode = "jmp";
+                        i.SetOpCode("jmp");
                         break;
                     case "nop":
-                        i.OpCode = "jmp";
+                        i.SetOpCode("jmp");
                         (loops, pc, acc) = TestProgram(instructions);
-                        i.OpCode = "nop";
+                        i.SetOpCode("nop");
                         break;
                 }
                 if (!loops && pc == instructions.Length)
@@ -85,9 +85,14 @@ namespace Day8
                 OpCode = parts[0];
                 Operand = int.Parse(parts[1]);
             }
-            public string OpCode { get; set; }
+            public string OpCode { get; private set; }
             public int Operand { get; }
             public bool Visited { get; set;}
+
+            public void SetOpCode(string opcode)
+            {
+                OpCode = opcode;
+            }
         }
     }
 }
