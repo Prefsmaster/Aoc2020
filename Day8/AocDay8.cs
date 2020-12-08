@@ -23,19 +23,19 @@ namespace Day8
             // Part 2, brute forced
             foreach (var i in instructions.Where(o => o.OpCode!="acc"))
             {
-                switch (i.OpCode)
+                var oldOpCode = i.OpCode;
+
+                i.OpCode = i.OpCode switch
                 {
-                    case "jmp":
-                        i.SetOpCode("nop");
-                        (loops, pc, acc) = TestProgram(instructions);
-                        i.SetOpCode("jmp");
-                        break;
-                    case "nop":
-                        i.SetOpCode("jmp");
-                        (loops, pc, acc) = TestProgram(instructions);
-                        i.SetOpCode("nop");
-                        break;
-                }
+                    "jmp" => "nop",
+                    "nop" => "jmp",
+                    _ => i.OpCode
+                };
+
+                (loops, pc, acc) = TestProgram(instructions);
+
+                i.OpCode = oldOpCode;
+
                 if (!loops && pc == instructions.Length)
                     break;
             }
@@ -85,14 +85,10 @@ namespace Day8
                 OpCode = parts[0];
                 Operand = int.Parse(parts[1]);
             }
-            public string OpCode { get; private set; }
-            public int Operand { get; }
-            public bool Visited { get; set;}
 
-            public void SetOpCode(string opcode)
-            {
-                OpCode = opcode;
-            }
+            public string OpCode;
+            public int Operand { get; }
+            public bool Visited;
         }
     }
 }
