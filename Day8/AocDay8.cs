@@ -47,7 +47,6 @@ namespace Day8
 
         private static (bool loops, int pc, int acc) TestProgram(Instruction[] instructions)
         {
-            // returns -1 when it loops, otherwise the PC value that is out of bounds.
             foreach (var i in instructions)
                 i.Visited = false;
 
@@ -104,7 +103,6 @@ namespace Day8
                 var parts = assemblyCode.Split();
                 OpCode = parts[0];
                 Operand = int.Parse(parts[1]);
-                Visited = false;
             }
             public string OpCode { get; set; }
             public int Operand { get; }
