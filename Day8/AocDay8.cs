@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 
 namespace Day8
 {
@@ -17,16 +18,14 @@ namespace Day8
             // Part 1
             (loops, pc, acc) = TestProgram(instructions);
             Console.WriteLine(loops
-                ? $"Program loops from PC {pc} when ACC is {acc}"
-                : $"Program out of bounds with PC at {pc} and ACC is {acc}");
+                ? $"Program loops. PC = {pc}, ACC = {acc}"
+                : $"Program out of bounds. PC = {pc}, ACC = {acc}");
 
             // Part 2, brute forced
-            foreach (var i in instructions)
+            foreach (var i in instructions.Where(o => o.OpCode!="acc"))
             {
                 switch (i.OpCode)
                 {
-                    case "acc":
-                        continue;
                     case "jmp":
                         i.OpCode = "nop";
                         (loops, pc, acc) = TestProgram(instructions);
@@ -42,16 +41,16 @@ namespace Day8
                     break;
             }
 
-            Console.WriteLine($"Program counter at {pc} is out of bounds, with ACC at {acc}.");
+            Console.WriteLine($"Program counter at {pc} is out of bounds, ACC = {acc}.");
         }
 
         private static (bool loops, int pc, int acc) TestProgram(Instruction[] instructions)
         {
             foreach (var i in instructions)
                 i.Visited = false;
-
             var pc = 0;
             var acc = 0;
+
             while (!instructions[pc].Visited)
             {
                 var i = instructions[pc];
