@@ -36,16 +36,18 @@ namespace Day9
 
         private static long FindWeakness(long targetValue, long[] numbers)
         {
-            var sum = 0L;
             var startIndex = 0;
             var endIndex = 0;
+            var sum = 0L;
 
-            while (sum != targetValue || (endIndex-1)-startIndex <=2)
+            while (sum != targetValue || endIndex-startIndex <=2)
             {
                 // use sliding window approach
-                // add from end until reached or too big
+
+                // add from end until target reached or too big
                 while (sum < targetValue) sum += numbers[endIndex++];
-                // subtract from start until reached or too small
+
+                // subtract from start until target reached or too small
                 while (sum > targetValue) sum -= numbers[startIndex++];
             }
 
