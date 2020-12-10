@@ -21,7 +21,7 @@ namespace Day10
             Console.WriteLine(Part2(values));
 
             BothPartsIn1(values);
-
+            Part2Method2(values);
         }
 
         private static void BothPartsIn1(List<int> joltages)
@@ -43,8 +43,7 @@ namespace Day10
                     groupCount = 0;
                 }
             }
-            Console.WriteLine(ones * threes);
-            Console.WriteLine(permutations);
+            Console.WriteLine($"Part1: {ones * threes}, Part 2: {permutations}");
         }
 
         private static int Part1(List<int> joltages)
@@ -113,5 +112,27 @@ namespace Day10
             }
             return (permutations);
         }
+
+        // First solution approach idea I had, before I got a hunch for
+        // the permutation of 1-groups idea, and went for that one first.
+        // added this one for fun and because Sijmen Mulder https://github.com/sjmulder solved it this way...
+        // Benefit: This one works for other delta's than just 1 and 3
+        private static void Part2Method2(List<int> joltages)
+        {
+            var size = joltages.Count;
+            var paths = new long[size];
+
+            // initialize with the single path from last adapter to the device 
+            paths[size - 1] = 1;
+            // traverse all adapters backward, starting with the adapter before the last
+            // The # of paths for this adapter is the sum of all the paths for those adapters this one can 'reach'
+            // when done, paths[0] contains the desired answer 
+            for (var i = size - 2; i >= 0; i--)
+                for (var j = i + 1; j < size && joltages[j] - joltages[i] <= 3; j++)
+                    paths[i] += paths[j];
+
+            Console.WriteLine(paths[0]);
+        }
+
     }
 }
