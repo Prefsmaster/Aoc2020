@@ -10,6 +10,7 @@ namespace Day10
         private static void Main()
         {
             var values = File.ReadAllLines("input.txt").Select(int.Parse).ToList();
+
             // add outlet;
             values.Add(0);
             values = values.OrderBy(j => j).ToList();
@@ -18,11 +19,40 @@ namespace Day10
 
             Console.WriteLine(Part1(values));
             Console.WriteLine(Part2(values));
+
+            BothPartsIn1(values);
+
+        }
+
+        private static void BothPartsIn1(List<int> joltages)
+        {
+            var threes = 0;
+            var ones = 0;
+            long permutations = 1;
+            var groupCount = 0;
+
+            for (var i = 1; i < joltages.Count; i++)
+            {
+                var delta = joltages[i] - joltages[i - 1];
+                if (delta == 1)
+                {
+                    ones++;
+                    groupCount++;
+                }
+                else
+                {
+                    threes++;
+                    permutations *= (int) (Math.Pow(2, groupCount - 1) - Math.Pow(2, groupCount - 3) + 1);
+                    groupCount = 0;
+                }
+            }
+            Console.WriteLine(ones * threes);
+            Console.WriteLine(permutations);
         }
 
         private static int Part1(List<int> joltages)
         {
-            var threes = 0; // device and largest
+            var threes = 0;
             var ones = 0;
 
             for (var i = 1; i < joltages.Count; i++)
