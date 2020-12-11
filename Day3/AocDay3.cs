@@ -2,7 +2,7 @@
 using System.IO;
 using System.Linq;
 
-namespace Day3
+namespace Day03
 {
     internal class AocDay3
     {

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.IO;
 
-namespace Day5
+namespace Day05
 {
     internal class AocDay5
     {

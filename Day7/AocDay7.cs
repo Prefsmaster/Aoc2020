@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
-namespace Day7
+namespace Day07
 {
     internal class AocDay7
     {
