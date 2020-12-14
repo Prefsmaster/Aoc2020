@@ -47,8 +47,8 @@ namespace Day12
                         heading = (heading + operand / 90)%4;
                         break;
                     case 'L':
-                        heading = (heading - operand / 90)%4;
-                        while (heading < 0) heading += 4;
+                        // three times right == left :-)
+                        heading = (heading + 3 * operand / 90)%4;
                         break;
                 }
             }
