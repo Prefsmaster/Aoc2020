@@ -17,8 +17,9 @@ namespace Day12
             var x = 0;
             var y = 0;
 
-            var dx = new [] {1, 0, -1, 0};
-            var dy = new []{0, -1, 0, 1};
+            var dx = new []{1,  0, -1, 0};
+            var dy = new []{0, -1,  0, 1};
+
             var heading = 0;
 
             foreach (var line in commands)
@@ -27,18 +28,10 @@ namespace Day12
                 var operand = int.Parse(line[1..]);
                 switch (command)
                 {
-                    case 'N':
-                        y += operand;
-                        break;
-                    case 'E':
-                        x += operand;
-                        break;
-                    case 'S':
-                        y -= operand;
-                        break;
-                    case 'W':
-                        x -= operand;
-                        break;
+                    case 'N': y += operand; break;
+                    case 'E': x += operand; break;
+                    case 'S': y -= operand; break;
+                    case 'W': x -= operand; break;
                     case 'F':
                         x += dx[heading] * operand;
                         y += dy[heading] * operand;
@@ -70,18 +63,10 @@ namespace Day12
                 var operand = int.Parse(line[1..]);
                 switch (command)
                 {
-                    case 'N':
-                        dy += operand;
-                        break;
-                    case 'E':
-                        dx += operand;
-                        break;
-                    case 'S':
-                        dy -= operand;
-                        break;
-                    case 'W':
-                        dx -= operand;
-                        break;
+                    case 'N': dy += operand; break;
+                    case 'E': dx += operand; break;
+                    case 'S': dy -= operand; break;
+                    case 'W': dx -= operand; break;
                     case 'F':
                         x += dx * operand;
                         y += dy * operand;
