@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 
@@ -9,9 +10,15 @@ namespace Day14
     {
         private static void Main()
         {
+            var sw = new Stopwatch();
+            sw.Start();
+
             var commands = File.ReadAllLines("input.txt");
             Part1(commands);
             Part2(commands);
+            
+            sw.Stop();
+            Console.WriteLine(sw.ElapsedTicks/10000.0);
         }
 
         private static void Part1(string[] commands)
@@ -87,7 +94,6 @@ namespace Day14
                         {
                             if ((bits & 1) != 0)
                                 realAddress |= (ulong)(1L << xOffsets[bit]);
-
                             bit++;
                             bits >>= 1;
                         }
@@ -95,7 +101,6 @@ namespace Day14
                     }
                 }
             }
-            Console.WriteLine(memory.Count);
             Console.WriteLine(memory.Sum(p => p.Value));
         }
     }
