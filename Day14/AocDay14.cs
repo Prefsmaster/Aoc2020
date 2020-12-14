@@ -42,16 +42,16 @@ namespace Day14
         }
         private static void Part2(string[] commands)
         {
+            var memory = new Dictionary<ulong,long>();
+
             ulong andMask = 0L;
             ulong orMask = 0L;
+            
             var floatingBitsCount = 0;
-
-            var memory = new Dictionary<ulong,long>();
             var xOffsets = new int[36];
 
             foreach (var line in commands)
             {
-
                 var parts = line.Split();
                 if (parts[0] == "mask")
                 {
