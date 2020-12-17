@@ -11,28 +11,21 @@ namespace Day16
         {
             var input = File.ReadAllLines("input.txt");
 
-            Part1(input);
-            Part2(input);
+            var fields = GetFields(input);
+
+            Part1(input, fields);
+            Part2(input, fields);
         }
 
-        private static void Part1(string[] input)
+        private static void Part1(string[] input, List<Field> fields)
         {
-            // first parse all rules
-            var li = 0;
-            var fields = new List<Field>();
-            while (!string.IsNullOrEmpty(input[li]))
-            {
-                fields.Add(new Field(input[li++]));
-            }
-
-            li += 5; // skip my ticket, nearby tickets
-
+            var line = fields.Count + 5;
             var answer = 0;
-            while (li<input.Length)
+            while (line<input.Length)
             {
-                var values = input[li].Split(',').Select(int.Parse).ToArray();
+                var values = input[line].Split(',').Select(int.Parse).ToArray();
                 answer += values.Where(v => !fields.Any(f => f.IsValid(v))).Sum();
-                li++;
+                line++;
             }
             Console.WriteLine(answer);
         }
@@ -49,16 +42,14 @@ namespace Day16
             return fields;
         }
 
-        private static void Part2(string[] input)
+        private static void Part2(string[] input, List<Field> fields)
         {
-            var fields = GetFields(input);
             var nFields = fields.Count;
 
             var line = nFields + 2;
             var myTicketValues = input[line].Split(',').Select(int.Parse).ToArray();
 
             line += 3;
-
             var validValues = new List<int[]>();
             while (line<input.Length)
             {
@@ -134,24 +125,24 @@ namespace Day16
     internal class Field
     {
         public string Name { get; }
-        private readonly int[][] validRanges;
+        private readonly int[][] _validRanges;
 
         public Field(string initString)
         {
             Name = initString.Split(':')[0];
             var ranges = initString.Split(':')[1].Split(" or ");
-            validRanges = new int[ranges.Length][];
+            _validRanges = new int[ranges.Length][];
             var ri = 0;
             foreach (var r in ranges)
             {
                 var delimiters = r.Split('-');
                 var start = int.Parse(delimiters[0]);
-                validRanges[ri++] = Enumerable.Range(start,int.Parse(delimiters[1])-start+1).ToArray();
+                _validRanges[ri++] = Enumerable.Range(start,int.Parse(delimiters[1])-start+1).ToArray();
             }
         }
         public bool IsValid(int value)
         {
-            return validRanges.Any(r => r.Contains(value));
+            return _validRanges.Any(r => r.Contains(value));
         }
         public bool IsValid(int[] values)
         {
