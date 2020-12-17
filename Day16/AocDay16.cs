@@ -75,23 +75,27 @@ namespace Day16
 
  
             // now find a row of values that are all valid for only 1 field.
+            // do this nFields times and remember the row index.
+
             var fieldIndex = new int[nFields];
             Array.Fill(fieldIndex,-1);
+
             var rowAssigned = new bool[nFields];
             var fieldsFitted = 0;
-
             // need to fit nFields
             while (fieldsFitted < nFields)
             {
                 for (var r = 0; r < nFields; r++)
                 {
-                    if (rowAssigned[r]) continue;
+                    if (rowAssigned[r]) continue;   // only do rows that were not assigned yet!
 
                     var fitsFields = 0;
                     var matchingField = -1;
 
                     for (var f = 0; f < nFields && fitsFields<2; f++)
                     {
+                        // if field already has an index, or a value is not valid, this field does
+                        // not match the current row
                         if (fieldIndex[f] != -1 || !fields[f].IsValid(validInputs[r])) continue;
 
                         fitsFields++;
@@ -99,9 +103,9 @@ namespace Day16
                     }
                     // if the row doesn't match exactly one field, keep searching
                     if (fitsFields != 1) continue;
-                    // assign row
+                    // flag row as assigned
                     rowAssigned[r] = true;
-                    // save index
+                    // save index (flag field as assigned)
                     fieldIndex[matchingField] = r;
                     // one more done
                     fieldsFitted++;
@@ -109,7 +113,7 @@ namespace Day16
             }
             // now we know the index of each field.
             // find the ones that start with departure!
-            // can be incorporated in the main loop above.
+            // optimization: can be incorporated in the main loop above.
             long answer = 1;
             for (var f = 0; f < nFields; f++)
             {
