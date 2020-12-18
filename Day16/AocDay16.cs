@@ -23,16 +23,15 @@ namespace Day16
             var answer = 0;
             while (line<input.Length)
             {
-                var values = input[line].Split(',').Select(int.Parse).ToArray();
+                var values = input[line++].Split(',').Select(int.Parse).ToArray();
                 answer += values.Where(v => !fields.Any(f => f.IsValid(v))).Sum();
-                line++;
             }
             Console.WriteLine(answer);
         }
 
         private static List<Field> GetFields(string[] input)
         {
-            int line = 0;
+            var line = 0;
             var fields = new List<Field>();
             while (!string.IsNullOrEmpty(input[line]))
             {
