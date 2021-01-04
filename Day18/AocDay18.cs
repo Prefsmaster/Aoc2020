@@ -1,6 +1,5 @@
 ﻿using System;
 using System.IO;
-using System.Linq;
 
 namespace Day18
 {
@@ -9,11 +8,23 @@ namespace Day18
         private static void Main()
         {
             var input = File.ReadAllLines("input.txt");
-            var sum = input.Aggregate(0L, (current, i) => current + EvaluatePart1(i, 0).Item1);
-            Console.WriteLine($"sum of answers = {sum}");
+            long sum1 = 0;
+            ulong sum2 = 0;
+            foreach (var expression in input)
+            {
+                var index = 0;
+                var r1 = EvaluatePart1(expression, ref index);
+                sum1 += r1;
+
+                index = 0;
+                var r2 = Eval2(expression, ref index);
+                sum2 += r2;
+            }
+            Console.WriteLine($"sum of answers 1 = {sum1}");
+            Console.WriteLine($"sum of answers 2 = {sum2}");
         }
 
-        private static (long, int) EvaluatePart1(string expression, int index)
+        private static long EvaluatePart1(string expression, ref int index)
         {
             long? a = null;
             long? n = null;
@@ -38,22 +49,24 @@ namespace Day18
                         }
                         if (a!=null && o != null && n!=null)
                         {
-                            if (o == '+')
+                            switch (o)
                             {
-                                a +=n;
-                            }
-                            if (o == '*')
-                            {
-                                a *= n;
+                                case '+':
+                                    a +=n;
+                                    break;
+                                case '*':
+                                    a *= n;
+                                    break;
                             }
                             n = null;
                             o = null;
                         }
                         if (c == ')')
-                            return (a.Value, index);
+                            // ReSharper disable once PossibleInvalidOperationException
+                            return (a.Value);
                         break;
                     case '(':
-                        (n, index) = EvaluatePart1(expression, index);
+                        n = EvaluatePart1(expression, ref index);
                         break;
                     case '+':
                     case '*':
@@ -61,7 +74,69 @@ namespace Day18
                         break;
                 }
             }
-            return (a.Value, index);
+            // should not happen
+            return (-1);
+        }
+
+        private static ulong Eval2(string expression, ref int index)
+        {
+            // get first value
+            var acc = NextVal(expression, ref index);
+
+            while (true)
+            {
+                if (index >= expression.Length) return acc;
+
+                var c = expression[index];
+
+                if (c == ')') return acc;
+
+                index++;
+                switch (c)
+                {
+                    case '+':
+                        acc += NextVal(expression, ref index);
+                        break;
+                    case '*':
+                        acc *= Eval2(expression, ref index);
+                        break;
+                }
+            }
+        }
+
+        private static ulong NextVal(string expression, ref int index)
+        {
+            ulong val = 0;
+            while (index < expression.Length)
+            {
+                var c = expression[index];
+
+                switch (c)
+                {
+                    case ' ':
+                        index++;
+                        break;
+                    case '(':
+                    {
+                        index++;
+                        val = Eval2(expression, ref index);
+                        // skip closing brace
+                        index++;
+                        return val;
+                    }
+                    default:
+                    {
+                        if (c >= '0' && c <= '9')
+                        {
+                            index++;
+                            val = val * 10 + c - '0';
+                            if (index>=expression.Length || expression[index] < '0' || expression[index] > '9') return val; 
+                        }
+                        break;
+                    }
+                }
+            }
+            return val;
         }
     }
 }
