@@ -7,7 +7,7 @@ namespace Day18
     {
         private static void Main()
         {
-            var input = File.ReadAllLines("input.txt");
+            var input = File.ReadAllLines("test2.txt");
             long sum1 = 0;
             ulong sum2 = 0;
             foreach (var expression in input)
