@@ -2,11 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Reflection.Metadata.Ecma335;
-using System.Runtime.CompilerServices;
-using System.Runtime.ExceptionServices;
-using System.Security.Cryptography.X509Certificates;
-using System.Threading;
 
 namespace Day20
 {
@@ -71,7 +66,7 @@ namespace Day20
             for (var candidateIndex = 0; candidateIndex < tiles.Count; candidateIndex++)
             {
                 var neighborCount = 
-                    tiles.Where((t, neighborIndex) => t.IsRealTile&&tiles[candidateIndex].IsRealTile && candidateIndex != neighborIndex && tiles[candidateIndex].SideValues.Count(t.SideValues.Contains) > 0)
+                    tiles.Where((t, neighborIndex) => candidateIndex != neighborIndex && tiles[candidateIndex].SideValues.Count(t.SideValues.Contains) > 0)
                         .Count();
                 
                 if (neighborCount == 2)
@@ -116,7 +111,6 @@ namespace Day20
         public int[] SideValues;
         public int[][] SideTable;
         public char[][] Data;
-        public bool IsRealTile { get; }
         public bool IsPlaced;
 
         // orientation 0-3 = normal rotated 0-3 times counterclockwise
@@ -124,20 +118,17 @@ namespace Day20
         // orientation 8-11 = flipped Y, rotated 0-3 times counterclockwise
         public int Orientation;
 
-        public Tile(int id, string[] data, bool isRealTile = true)
+        public Tile(int id, string[] data)
         {
             Id = id;
-            IsRealTile = isRealTile;
             Orientation = 0;
+            IsPlaced = false;
 
-            if (isRealTile)
-            {
-                FillData(data);
-                CreateSideValues();
-                Console.WriteLine($"{string.Join(",", SideValues)}");
-                InitSideTable(data.Length);
-                FillSideTable();
-            }
+            FillData(data);
+            CreateSideValues();
+            Console.WriteLine($"{string.Join(",", SideValues)}");
+            InitSideTable(data.Length);
+            FillSideTable();
         }
 
         private void InitSideTable(int bits)
@@ -205,15 +196,11 @@ namespace Day20
             }
         }
 
-        public bool SideMatches(Sides side, int value)
-        {
-            // 'empty' tile always matches!
-            return (!IsRealTile) || Side(side) == value;
-        }
+        public int Side(Sides side) => SideTable[Orientation / 4][Orientation % 4 + (int)side];
 
-        public int Side(Sides side)
+        public bool SidesMatch(Tile tile, Sides own, Sides other)
         {
-            return SideTable[Orientation / 4][Orientation % 4 + (int)side];
+            return (tile==null) || Side(own) == tile.Side(other);
         }
     }
 
@@ -233,14 +220,11 @@ namespace Day20
         public Photo(int side)
         {
             _side = side + 2;
-            // create a picture with a ring of forever empty tiles around it.
-            var emptyTile = new Tile(-1,null, false);
+            // create a picture with a ring of forever 'null' tiles around it.
             Parts = new Tile[_side][];
             for (var r = 0; r < _side; r++)
             {
                 Parts[r] = new Tile[_side];
-                for (var t = 0; t < _side; t++)
-                    Parts[r][t] = emptyTile;
             }
         }
 
@@ -279,7 +263,7 @@ namespace Day20
                 for (var r = 0; r < _side; r++)
                 {
                     for (var t = 0; t < _side; t++)
-                        Parts[r][t] = Parts[0][0];
+                        Parts[r][t] = null;
                 }
                 edges = new List<Tile>(orgEdges);
                 corners = new List<Tile>(orgCorners);
@@ -339,14 +323,10 @@ namespace Day20
             return false;
         }
 
-        private bool TileFits(Tile t, int x, int y)
-        {
-            return (
-                   Parts[x][y - 1].SideMatches(Sides.Bottom, t.Side(Sides.Top))
-                && Parts[x][y + 1].SideMatches(Sides.Top, t.Side(Sides.Bottom))
-                && Parts[x + 1][y].SideMatches(Sides.Left, t.Side(Sides.Right))
-                && Parts[x - 1][y].SideMatches(Sides.Right, t.Side(Sides.Left))
-            );
-        }
+        private bool TileFits(Tile t, int x, int y) =>
+            t.SidesMatch(Parts[x][y - 1], Sides.Top, Sides.Bottom) &&
+            t.SidesMatch(Parts[x][y + 1], Sides.Bottom, Sides.Top) &&
+            t.SidesMatch(Parts[x + 1][y], Sides.Right, Sides.Left) &&
+            t.SidesMatch(Parts[x - 1][y], Sides.Left, Sides.Right);
     }
 }
