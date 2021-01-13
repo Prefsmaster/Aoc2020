@@ -7,6 +7,7 @@ namespace Day20
 {
     internal class AocDay20
     {
+
         private static void Main()
         {
             const string filename = "input.txt";
@@ -23,51 +24,9 @@ namespace Day20
         {
             var photo = new Photo((int)Math.Sqrt(tiles.Count));
 
-            var success = photo.RecursiveBoard(tiles);
+            var success = photo.SolveBoard(tiles,0);
 
-            // check to see if idea for ring-wise solution will work
-            //var countIds = new List<int>[5];
-            //for (var cil = 0; cil < 5; cil++)
-            //    countIds[cil] = new List<int>();
-
-            //while (tiles.Count != 0)
-            //{
-            //    for (var cil = 0; cil < 5; cil++) countIds[cil].Clear();
-            //    for (var a1 = 0; a1 < tiles.Count; a1++)
-            //    {
-            //        var matchingSides = tiles.Where((t, a2) => a1 != a2 && tiles[a1].SideValues.Count(t.SideValues.Contains) > 0).Count();
-            //        countIds[matchingSides].Add(tiles[a1].Id);
-            //    }
-            //    Console.WriteLine($"{string.Join(",", countIds.Select(cid => cid.Count))}");
-
-            //    var tilesToPlace = tiles.Where(t => countIds[2].Contains(t.Id)).ToList();
-            //    tilesToPlace.AddRange(tiles.Where(t => countIds[3].Contains(t.Id)));
-            //    tilesToPlace.AddRange(tiles.Where(t => countIds[0].Contains(t.Id)));
-
-            //    var success = photo.RecursiveRing(tilesToPlace);
-
-            //    // photo.Dump();
-            //    // continue with next ring
-
-            //    tiles = tiles.Where(t => countIds[4].Contains(t.Id)).ToList();
-
-            //    //if (tiles.Count == 1)
-            //    //{
-            //    //    photo.PlaceRing(tiles, new List<Tile>());
-            //    //    tiles.Clear();
-            //    //}
-            //    //else
-            //    //{
-            //    //    var corners = tiles.Where(t => countIds[2].Contains(t.Id)).ToList();
-            //    //    var edges = tiles.Where(t => countIds[3].Contains(t.Id)).ToList();
-
-            //    //    // place ring
-            //    //    photo.PlaceRing(corners, edges);                
-
-            //    //    // continue with next ring
-            //    //    tiles = tiles.Where(t => countIds[4].Contains(t.Id)).ToList();
-            //    //}
-            //}
+            photo.Dump();
         }
 
         private static void DoPart1(List<Tile> tiles)
@@ -122,6 +81,8 @@ namespace Day20
 
     internal class Tile
     {
+        private const int Permutations = 8;
+
         public int Id;
         public int[] SideValues;
         public char[][] Data;
@@ -147,16 +108,8 @@ namespace Day20
         {
             // normal orientation T R B L
             { 0,1,2,3 },
-            // flipped diagonally
-            { 7,6,5,4 },
-            // flipped y = vertically so use B R' T L'
-            { 4,3,6,1 },
-            // flipped diagonally
-            { 5,2,7,0 },
-            // flipped y = vertically so use B R' T L'
-            { 2,5,0,7 },
-            // flipped diagonally
-            { 3,4,2,6 }
+            // flipped, use L' B' R' T'
+            { 7,6,5,4 }
             // No need to provide flipped x+y or diagonally x+y because this is just
             // a rotation by 180 degrees, and is already
             // covered by the 4 rotations of 'normal' 
@@ -173,38 +126,51 @@ namespace Day20
         private void CreateSideValues()
         {
             SideValues = new int[8];
-            var b = 1; var b2 = 1 << (Data.Length - 1);
-            for (var p = 0; p < Data.Length; p++)
+            var maxIndex = Data.Length - 1; 
+            var b = 1; var b2 = 1 << maxIndex;
+            for (var p = 0; p <= maxIndex; p++)
             {
                 // Top and Top'
                 if (Data[0][p] == '#') { SideValues[0] += b; SideValues[4] += b2; }
                 // Right and Right'
                 if (Data[p][^1] == '#') { SideValues[1] += b; SideValues[5] += b2; }
                 // Bottom and Bottom'
-                if (Data[^1][p] == '#') { SideValues[2] += b; SideValues[6] += b2; }
+                if (Data[^1][maxIndex-p] == '#') { SideValues[2] += b; SideValues[6] += b2; }
                 // Left and Left'
-                if (Data[p][0] == '#') { SideValues[3] += b; SideValues[7] += b2; }
+                if (Data[maxIndex-p][0] == '#') { SideValues[3] += b; SideValues[7] += b2; }
                 b <<= 1; b2 >>= 1;
             }
         }
 
         public int Side(Sides side) => SideValues[FlippedSidesMap[Orientation / 4,((Orientation % 4) + (int)side)%4]];
+        public int Side2(Sides side) => SideValues[FlippedSidesMap[1-Orientation / 4,3-((Orientation % 4) + (int)side)%4]];
 
         public bool SidesMatch(Tile tile, Sides own, Sides other)
         {
-            return (tile == null) || Side(own) == tile.Side(other);
+            if (tile == null) return true;
+            var ownValue = Side(own);
+            var otherValue = tile.Side2(other);
+            if (otherValue != ownValue)
+                return false;
+            return true;
         }
 
         public void ShowAllSides()
         {
+            var s = FlippedSidesMap.Length;
+
             Console.WriteLine($"Tile {Id} values: {string.Join(",", SideValues)}");
-            for (var r = 0; r < 24; r++)
+            for (var r = 0; r < Permutations; r++)
             {
                 Orientation = r;
                 Console.Write($"{Side(Sides.Top):D3} ");
                 Console.Write($"{Side(Sides.Right):D3} ");
                 Console.Write($"{Side(Sides.Bottom):D3} ");
-                Console.WriteLine($"{Side(Sides.Left):D3}");
+                Console.Write($"{Side(Sides.Left):D3}");
+                Console.Write($"{Side2(Sides.Top):D3} ");
+                Console.Write($"{Side2(Sides.Right):D3} ");
+                Console.Write($"{Side2(Sides.Bottom):D3} ");
+                Console.WriteLine($"{Side2(Sides.Left):D3}");
                 if (r%4==3)
                     Console.WriteLine();
             }
@@ -221,240 +187,54 @@ namespace Day20
 
     internal class Photo
     {
-        public Tile[][] Parts;
+        private const int Permutations = 8;
+
+        public Tile[] Parts;
         private readonly int _side;
-        private bool _haveFirstRing;
-
-        private readonly int[] _dx = { 1, 0, -1, 0 };
-        private readonly int[] _dy = { 0, 1, 0, -1 };
-
-        private int _tilesPerSide;
-
 
         public Photo(int side)
         {
-            _side = side + 2;
-            // create a picture with a ring of forever 'null' tiles around it.
-            Parts = new Tile[_side][];
-            for (var r = 0; r < _side; r++)
-            {
-                Parts[r] = new Tile[_side];
-            }
+            _side = side;
+            Parts = new Tile[_side*_side];
         }
-
-        public bool PlaceRing(List<Tile> corners, List<Tile> edges)
-        {
-            if (!_haveFirstRing)
-                return _haveFirstRing = DoFirstRing(corners, edges);
-            return DoNextRing(corners, edges);
-        }
-
-        public bool RecursiveRing(List<Tile> tiles)
-        {
-            _tilesPerSide = tiles.Count / 4;
-            var start = (_side - _tilesPerSide - 1) / 2;
-            var success = false;
-            success = PlaceTile(tiles, 0, start, start);
-            return success;
-        }
-        public bool RecursiveBoard(List<Tile> tiles)
-        {
-            tries = 0;
-            var success = false;
-            success = PlaceTileBoard(tiles,1, 1);
-            return success;
-        }
-
-        private bool PlaceTile(List<Tile> tiles, int placed, int x, int y)
-        {
-            foreach(var candidate in tiles)
-            {
- //               Console.WriteLine($"{candidate.Id} {placed} {x} {y}");
-                // try each orientation.
-                if (candidate.IsPlaced) continue;
-
-                for (var o = 0; o < 24; o++)
-                {
-                    candidate.Orientation = o;
-
-                    if (!TileFits(candidate, x, y)) continue;
-
-                    Parts[y][x] = candidate;
-                    candidate.IsPlaced = true;
-
-                    if (tiles.All(t => t.IsPlaced))
-                    {
-                        Dump();
-//                        return true;
-                        Parts[y][x] = null;
-                        candidate.IsPlaced = false;
-                    }
-                    else
-                    {
-                        // one more placed, do next
-                        var nextX = x + _dx[placed / _tilesPerSide];
-                        var nextY = y + _dy[placed / _tilesPerSide];
-                        placed++;
-                        if (PlaceTile(tiles, placed, nextX, nextY))
-                        {
-                            return true;
-                        }
-
-                        placed--;
-                        Parts[y][x] = null;
-                        candidate.IsPlaced = false;
-                    }
-                }
-            }
-            return false;
-        }
-
-        private long tries;
-        private bool PlaceTileBoard(List<Tile> tiles, int x, int y)
+ 
+        public bool SolveBoard(List<Tile> tiles, int pos)
         {
             foreach(var candidate in tiles.Where(t=>!t.IsPlaced))
             {
-                for ( var o = 0; o < 24; o++)
+                for ( var o = 0; o < Permutations; o++)
                 {
-                    if (tries++%1000000 == 0)
-                        Console.Write($"{tiles.Count(t => t.IsPlaced)} ");
-
                     candidate.Orientation = o;
-                    if (!TileFits(candidate, x, y)) continue;
+                    if (!TileFits(candidate, pos)) continue;
 
-                    Parts[y][x] = candidate;
+                    Parts[pos] = candidate;
                     candidate.IsPlaced = true;
 
-                    if (tiles.All(t => t.IsPlaced))
-                    {
-                        Dump();
-//                        return true;
-                        Parts[y][x] = null;
-                        candidate.IsPlaced = false;
-                    }
-                    else
-                    {
+                    if ((pos == _side * _side - 1) || (SolveBoard(tiles, pos + 1))) return true;
 
-                        // one more placed, do next
-                        var nextX = x + 1;
-                        var nextY = y;
-                        if (nextX == _side-1)
-                        {
-                            nextX = 1;
-                            nextY++;
-                        }
-                        if (PlaceTileBoard(tiles, nextX, nextY))
-                        {
-                            return true;
-                        }
-                        Parts[y][x] = null;
-                        candidate.IsPlaced = false;
-                    }
+                    Parts[pos] = null;
+                    candidate.IsPlaced = false;
                 }
             }
             return false;
         }
 
-
-        private bool DoFirstRing(List<Tile> corners, List<Tile> edges)
+        private bool TileFits(Tile t, int pos)
         {
-            var edgesPerSide = edges.Count / 4;
-            var success = false;
-
-            var orgCorners = new List<Tile>(corners);
-            var orgEdges = new List<Tile>(edges);
-            for (var orientation = 0; orientation < 24 && !success; orientation++)
-            {
-                var x = 1;
-                var y = 1;
-                success = true;
-
-                for (var side = 0; side < 4 && success; side++)
-                {
-                    if (side == 0) corners[0].Orientation = orientation;
-
-                    success = PlaceTiles(corners, 1, ref x, ref y, side, side == 0);
-                    if (success && edges.Count >= edgesPerSide)
-                        success = PlaceTiles(edges, edgesPerSide, ref x, ref y, side);
-                }
-
-                if (success) continue;
-
-                // reset photo
-                for (var r = 0; r < _side; r++)
-                {
-                    for (var t = 0; t < _side; t++)
-                        Parts[r][t] = null;
-                }
-                edges = new List<Tile>(orgEdges);
-                corners = new List<Tile>(orgCorners);
-            }
-            return success;
+            var term1 = (pos/_side <= 0) || (t.SidesMatch(Parts[pos-_side], Sides.Top, Sides.Bottom));
+            var term2 = (pos%_side <= 0) || (t.SidesMatch(Parts[pos- 1], Sides.Left, Sides.Right));
+            return term1 && term2;
         }
-
-        private bool DoNextRing(List<Tile> corners, List<Tile> edges)
-        {
-            var edgesPerSide = edges.Count / 4;
-
-            var x = (_side - edgesPerSide - 2) / 2;
-            var y = x;
-
-            var success = true;
-
-            for (var side = 0; side < corners.Count && success; side++)
-            {
-                success = PlaceTiles(corners, 1, ref x, ref y, side);
-                if (success && edges.Count >= edgesPerSide)
-                    success = PlaceTiles(edges, edgesPerSide, ref x, ref y, side);
-            }
-            return success;
-        }
-
-        private bool PlaceTiles(List<Tile> tiles, int piecesToPlace, ref int x, ref int y, int side, bool firstCorner = false)
-        {
-            var success = false;
-            do
-            {
-                for (var c = 0; c < tiles.Count && piecesToPlace != 0; c++)
-                {
-                    var fits = firstCorner ? TileFits(tiles[c], x, y) : TryPiece(tiles[c], x, y);
-                    if (!fits) continue;
-
-                    piecesToPlace--;
-                    Parts[y][x] = tiles[c];
-                    tiles.RemoveAt(c);
-                    x += _dx[side];
-                    y += _dy[side];
-                    success = true;
-                }
-            } while (success && piecesToPlace != 0);
-            return success;
-        }
-
-        private bool TryPiece(Tile t, int x, int y)
-        {
-            for (var o = 0; o < 24; o++)
-            {
-                t.Orientation = o;
-                if (TileFits(t, x, y)) return true;
-            }
-            return false;
-        }
-
-        //private bool TileFits(Tile t, int x, int y) => true;
-        private bool TileFits(Tile t, int x, int y) =>
-            t.SidesMatch(Parts[y - 1][x], Sides.Top, Sides.Bottom) &&
-            t.SidesMatch(Parts[y + 1][x], Sides.Bottom, Sides.Top) &&
-            t.SidesMatch(Parts[y][x + 1], Sides.Right, Sides.Left) &&
-            t.SidesMatch(Parts[y][x - 1], Sides.Left, Sides.Right);
 
         public void Dump()
         {
+            var p = 0;
             for (var y = 0; y < _side; y++)
             {
                 for (var x = 0; x < _side; x++)
                 {
-                    Console.Write($"{(Parts[y][x] == null ? 0 : Parts[y][x].Id):D4}:{(Parts[y][x] == null ? 0 : Parts[y][x].Orientation):D2} ");
+                    Console.Write($"{(Parts[p] == null ? 0 : Parts[p].Id):D4}:{(Parts[p] == null ? 0 : Parts[p].Orientation):D2} ");
+                    p++;
                 }
                 Console.WriteLine();
             }
