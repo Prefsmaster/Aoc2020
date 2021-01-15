@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 
@@ -7,14 +8,11 @@ namespace Day20
 {
     internal class AocDay20
     {
-
         private static void Main()
         {
             const string filename = "input.txt";
             var tiles = ReadTiles(filename);
             Console.WriteLine($"read {tiles.Count} tiles with side {tiles[0].Data.Length}\n");
-
-            tiles[0].ShowAllSides();
 
             DoPart1(tiles);
             DoPart2(tiles);
@@ -24,8 +22,7 @@ namespace Day20
         {
             var photo = new Photo((int)Math.Sqrt(tiles.Count));
 
-            var success = photo.SolveBoard(tiles,0);
-
+            photo.SolveBoard(tiles,0);
             photo.Dump();
         }
 
@@ -52,6 +49,7 @@ namespace Day20
             Console.WriteLine($"answer part1 = {answer}\n");
         }
 
+        [SuppressMessage("ReSharper", "PossibleNullReferenceException")]
         private static List<Tile> ReadTiles(string filename)
         {
             var file = new StreamReader(filename);
@@ -61,7 +59,6 @@ namespace Day20
             {
                 // 'Tile 1234:' part
                 var id = int.Parse(file.ReadLine().Split()[1][..^1]);
-
                 // read first line of data to determine side size
                 line = file.ReadLine();
                 var lines = line.Length;
@@ -69,9 +66,7 @@ namespace Day20
                 data[0] = line;
                 for (var l = 1; l < lines; l++)
                     data[l] = file.ReadLine();
-
                 tiles.Add(new Tile(id, data));
-
                 // read trailing empty line, will return null after last tile.
                 line = file.ReadLine();
             } while (line != null);
@@ -81,18 +76,17 @@ namespace Day20
 
     internal class Tile
     {
-        private const int Permutations = 8;
-
         public int Id;
-        public int[] SideValues;
+
+        // contains values of bit patterns on the sides.
+        // 0-3 reading from left to right (normal)
+        // 4-7 reading from right to left (flipped)
+        public int[] SideValues; 
+        
         public char[][] Data;
         public bool IsPlaced;
-
-        // orientation 0-3 = normal rotated 0-3 times counterclockwise
-        // orientation 4-7 = flipped X, rotated 0-3 times counterclockwise
-        // orientation 8-11 = flipped Y, rotated 0-3 times counterclockwise
         public int Orientation;
-
+        
         public Tile(int id, string[] data)
         {
             Id = id;
@@ -101,80 +95,40 @@ namespace Day20
 
             FillData(data);
             CreateSideValues();
-            Console.WriteLine($"{string.Join(",", SideValues)}");
         }
 
-        private static readonly int[,] FlippedSidesMap =
-        {
-            // normal orientation T R B L
-            { 0,1,2,3 },
-            // flipped, use L' B' R' T'
-            { 7,6,5,4 }
-            // No need to provide flipped x+y or diagonally x+y because this is just
-            // a rotation by 180 degrees, and is already
-            // covered by the 4 rotations of 'normal' 
-        };
 
         private void FillData(string[] data)
         {
             Data = new char[data.Length][];
             for (var l = 0; l < data.Length; l++)
-            {
                 Data[l] = data[l].ToCharArray();
-            }
         }
+ 
         private void CreateSideValues()
         {
             SideValues = new int[8];
-            var maxIndex = Data.Length - 1; 
-            var b = 1; var b2 = 1 << maxIndex;
-            for (var p = 0; p <= maxIndex; p++)
+            var mI = Data.Length - 1; 
+            var b = 1; var b2 = 1 << mI;
+            for (var p = 0; p <= mI; p++)
             {
-                // Top and Top'
-                if (Data[0][p] == '#') { SideValues[0] += b; SideValues[4] += b2; }
-                // Right and Right'
-                if (Data[p][^1] == '#') { SideValues[1] += b; SideValues[5] += b2; }
-                // Bottom and Bottom'
-                if (Data[^1][maxIndex-p] == '#') { SideValues[2] += b; SideValues[6] += b2; }
-                // Left and Left'
-                if (Data[maxIndex-p][0] == '#') { SideValues[3] += b; SideValues[7] += b2; }
+                if (Data[0][p]     == '#') { SideValues[0] += b; SideValues[7] += b2; } // Top and Top'
+                if (Data[p][^1]    == '#') { SideValues[1] += b; SideValues[6] += b2; } // Right and Right'
+                if (Data[^1][mI-p] == '#') { SideValues[2] += b; SideValues[5] += b2; } // Bottom and Bottom'
+                if (Data[mI-p][0]  == '#') { SideValues[3] += b; SideValues[4] += b2; } // Left and Left'
                 b <<= 1; b2 >>= 1;
             }
         }
 
-        public int Side(Sides side) => SideValues[FlippedSidesMap[Orientation / 4,((Orientation % 4) + (int)side)%4]];
-        public int Side2(Sides side) => SideValues[FlippedSidesMap[1-Orientation / 4,3-((Orientation % 4) + (int)side)%4]];
+        // returns the correct value for the given side and orientation from the SideValues table
+        // normal values for matching
+        public int Side(Sides side) => SideValues[(Orientation / 4) * 4 + ((Orientation % 4 + (int)side)%4)];
+        // returns the correct value for the given side and orientation for the adjacent tile 
+        // uses the inverted values for matching, side order also reversed
+        // (1-flipped, 3-side)
+        public int Side2(Sides side) => SideValues[(1-(Orientation / 4)) * 4 + (3-((Orientation % 4 + (int)side)%4))];
 
-        public bool SidesMatch(Tile tile, Sides own, Sides other)
-        {
-            if (tile == null) return true;
-            var ownValue = Side(own);
-            var otherValue = tile.Side2(other);
-            if (otherValue != ownValue)
-                return false;
-            return true;
-        }
-
-        public void ShowAllSides()
-        {
-            var s = FlippedSidesMap.Length;
-
-            Console.WriteLine($"Tile {Id} values: {string.Join(",", SideValues)}");
-            for (var r = 0; r < Permutations; r++)
-            {
-                Orientation = r;
-                Console.Write($"{Side(Sides.Top):D3} ");
-                Console.Write($"{Side(Sides.Right):D3} ");
-                Console.Write($"{Side(Sides.Bottom):D3} ");
-                Console.Write($"{Side(Sides.Left):D3}");
-                Console.Write($"{Side2(Sides.Top):D3} ");
-                Console.Write($"{Side2(Sides.Right):D3} ");
-                Console.Write($"{Side2(Sides.Bottom):D3} ");
-                Console.WriteLine($"{Side2(Sides.Left):D3}");
-                if (r%4==3)
-                    Console.WriteLine();
-            }
-        }
+        public bool SidesMatch(Tile tile, Sides own, Sides other) => tile == null || Side(own) == tile.Side2(other);
     }
 
     internal enum Sides
